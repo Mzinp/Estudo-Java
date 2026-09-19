@@ -3,6 +3,7 @@ package exercicios.javacore.Gassociacao.domain;
 public class Professor {
     private String nome;
 
+
     public Professor(String nome) {
         this.nome = nome;
     }

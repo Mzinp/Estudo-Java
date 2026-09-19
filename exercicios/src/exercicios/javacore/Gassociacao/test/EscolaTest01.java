@@ -4,12 +4,13 @@ import exercicios.javacore.Gassociacao.domain.Escola;
 import exercicios.javacore.Gassociacao.domain.Professor;
 
 public class EscolaTest01 {
-    public static void main(String[] args) {
-        Professor teacher = new  Professor("Maria");
-        Professor teacher2 = new  Professor("Jiraya Sensei");
-        Professor[] teachers = {teacher, teacher2};
-        Escola school = new Escola("School", teachers);
+    static void main() {
+        Professor p = new Professor("jiraia");
+        Professor p2 = new Professor("eu");
+        Professor p3 = new Professor("doido");
+        Professor[] professores = {p, p2, p3};
+        Escola e1 = new Escola("konora", professores);
 
-        school.print();
+        e1.imprime();
     }
 }

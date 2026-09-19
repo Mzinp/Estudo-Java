@@ -2,36 +2,44 @@ package exercicios.javacore.Gassociacao.domain;
 
 public class Time {
     private String nome;
-    private Jogador[] players;
+    private Jogador[] jogadores;
+
+    public Time(String nome, Jogador[] jogadores) {
+        this.nome = nome;
+        this.jogadores = jogadores;
+    }
 
     public Time(String nome) {
         this.nome = nome;
     }
 
-    public Time(String nome, Jogador[] players) {
-        this.nome = nome;
-        this.players = players;
-    }
-
-    public void print(){
+    public void imprime() {
         System.out.println(this.nome);
-        if (this.players == null) return;
-        for (Jogador player: this.players){
-            System.out.println(player.getNome());
+        if (jogadores == null) return;
+        for (Jogador j : jogadores) {
+            System.out.println(j.getNome());
         }
     }
 
-    public Jogador[] getPlayers() {
-        return players;
+    public Jogador[] getJogadores() {
+        Jogador[] total = new Jogador[0];
+        int cont = 0;
+        for (Jogador j : jogadores) {
+            total[cont] = j;
+            cont++;
+        }
+
+        return total;
     }
 
-    public void setPlayers(Jogador[] players) {
-        this.players = players;
+    public void setJogadores(Jogador[] jogadores) {
+        this.jogadores = jogadores;
     }
 
     public String getNome() {
         return nome;
     }
+
     public void setNome(String nome) {
         this.nome = nome;
     }
