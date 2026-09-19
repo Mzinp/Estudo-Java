@@ -4,11 +4,11 @@ import exercicios.javacore.Gassociacao.domain.Jogador;
 import exercicios.javacore.Gassociacao.domain.Time;
 
 public class JogadorTest02 {
-    public static void main(String[] args) {
-        Jogador jogador1 = new Jogador("Casio");
+    static void main() {
+        Jogador j1 = new Jogador("Joao");
+        Time time = new Time("cordas");
 
-        Time time = new Time("Cracovia");
-
-        jogador1.setTime(time);jogador1.imprime();
+        j1.setTime(time);
+        j1.imprimir();
     }
 }
