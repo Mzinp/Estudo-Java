@@ -1,0 +1,19 @@
+O Cenário: Sistema de Prevenção a Fraudes (Fintech)Você foi encarregado de desenvolver o núcleo de um sistema de detecção de fraudes em transações financeiras. O sistema recebe um lote histórico de transações processadas e precisa identificar contas suspeitas com base em padrões de comportamento.Regras de NegócioUma conta (accountId) deve ser classificada como fraudulenta e ter seu ID retornado na lista final se atender a pelo menos uma das seguintes condições:Pico de Frequência: A conta realizou mais de 3 transações em um intervalo deslizante de 5 minutos.Volume Suspeito: O valor total transacionado pela conta excedeu R$ 10.000,00 em um intervalo de 24 horas.Restrições e Detalhes:A lista de entrada pode conter milhares de transações e não está garantidamente ordenada por data/hora.Uma conta que cometeu fraude múltiplas vezes deve aparecer apenas uma vez na lista de retorno.O uso de memória e a complexidade de tempo são essenciais. Soluções com complexidade $O(N^2)$ para cada conta serão penalizadas na avaliação.O Código BaseSeu objetivo é implementar a interface FraudDetector. Você pode criar classes auxiliares se necessário.Javaimport java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record Transaction(
+    String id,
+    String accountId,
+    BigDecimal amount,
+    LocalDateTime timestamp
+) {}
+
+public interface FraudDetector {
+    /**
+     * @param transactions Lista de transações a serem analisadas.
+     * @return Lista contendo os IDs das contas identificadas como fraudulentas.
+     */
+    List<String> findFraudulentAccounts(List<Transaction> transactions);
+}
+O que o entrevistador vai avaliarEstrutura de Dados: Como você agrupa e processa as transações por conta.Algoritmo de Janela Deslizante (Sliding Window): A lógica matemática para verificar os intervalos de 5 minutos e 24 horas de forma eficiente.Fluência na Linguagem: Uso adequado da API de Datas do Java 8+ (LocalDateTime, Duration), Streams, Collections e imutabilidade.Tratamento de Edge Cases: Transações com o exato mesmo timestamp e ordenação inicial dos dados.
