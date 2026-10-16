@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - estudo-java
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-new-classes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fazer o checkout do código
+        uses: actions/checkout@v4
+        with:
+          # O fetch-depth: 2 é necessário para o git comparar os commits
+          fetch-depth: 2
+
+      - name: Configurar o Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '22' # numero do bem
+          distribution: 'temurin'
+
+      - name: Identificar, Compilar e Executar arquivos novos
+        run: |
+          # Procura apenas por arquivos Java novos (Adicionados) no último commit
+          NOVOS_ARQUIVOS=$(git diff --name-only --diff-filter=A HEAD~1 | grep '\.java$' || true)
+          
+          if [ -z "$NOVOS_ARQUIVOS" ]; then
+            echo "Nenhuma classe Java nova foi encontrada neste commit."
+            exit 0
+          fi
+          
+          echo "Arquivos encontrados:"
+          echo "$NOVOS_ARQUIVOS"
+          echo "----------------------------------------"
+          
+          for ARQUIVO in $NOVOS_ARQUIVOS; do
+            echo "Executando: $ARQUIVO"
+          
+            # Pega a pasta e o nome do arquivo para compilar corretamente
+            DIRETORIO=$(dirname "$ARQUIVO")
+            NOME_CLASSE=$(basename "$ARQUIVO" .java)
+          
+            # Entra na pasta do arquivo
+            cd "$DIRETORIO"
+          
+            # Compila e roda
+            javac "$NOME_CLASSE.java"
+            java "$NOME_CLASSE"
+          
+            # Volta para a pasta raiz
+            cd - > /dev/null
+          
+            echo "----------------------------------------"
+          done
