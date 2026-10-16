@@ -26,8 +26,6 @@ jobs:
       - name: Compilar projeto e executar todas as mains
         run: |
           echo "Buscando arquivos Java no projeto..."
-          
-          # Cria um arquivo de texto com o caminho de TODOS os .java do repositório
           find . -name "*.java" > sources.txt
           
           if [ ! -s sources.txt ]; then
@@ -35,16 +33,13 @@ jobs:
             exit 0
           fi
           
-          # Cria a pasta para onde os arquivos compilados vão
           mkdir -p out_classes
-          
           echo "Compilando todos os arquivos..."
           javac -d out_classes @sources.txt
           
-          echo "Procurando por classes com método 'public static void main'..."
-          
-          # Busca todos os arquivos .java que tenham o método main escrito dentro
-          ARQUIVOS_MAIN=$(grep -rl "public static void main" . | grep '\.java$' || true)
+          echo "Procurando por classes com método main..."
+          # O parâmetro -E permite usar Regex. Ele vai achar qualquer variação de "static void main (" com ou sem "public" e com qualquer espaçamento.
+          ARQUIVOS_MAIN=$(grep -rlE "(public[[:space:]]+)?static[[:space:]]+void[[:space:]]+main[[:space:]]*\(" . | grep '\.java$' || true)
           
           if [ -z "$ARQUIVOS_MAIN" ]; then
             echo "Nenhuma classe com método main foi encontrada."
@@ -52,21 +47,22 @@ jobs:
           fi
           
           for ARQUIVO in $ARQUIVOS_MAIN; do
-            # Extrai apenas a parte do caminho depois de '/src/' para pegar a estrutura de pacotes
-            # Ex: ./exercicios/src/br/com/pacote/App.java vira br/com/pacote/App.java
-            CAMINHO_RELATIVO=$(echo "$ARQUIVO" | sed -n 's/.*\/src\/\(.*\)/\1/p')
+            NOME_CLASSE=$(basename "$ARQUIVO" .java)
           
-            if [ -n "$CAMINHO_RELATIVO" ]; then
-              # Substitui as barras por pontos para formar o nome do pacote (br.com.pacote.App)
-              CLASSE_COMPLETA=$(echo "$CAMINHO_RELATIVO" | sed 's/\//./g' | sed 's/\.java//')
+            # Pega o pacote ignorando espaços extras
+            PACOTE=$(grep -m 1 "^[[:space:]]*package" "$ARQUIVO" | awk '{print $2}' | tr -d ';\r' || true)
           
-              echo "=================================================="
-              echo "▶ Executando: $CLASSE_COMPLETA"
-              echo "=================================================="
-          
-              # Executa a classe apontando para a pasta onde tudo foi compilado
-              java -cp out_classes "$CLASSE_COMPLETA"
-          
-              echo ""
+            if [ -n "$PACOTE" ]; then
+              CLASSE_COMPLETA="$PACOTE.$NOME_CLASSE"
+            else
+              CLASSE_COMPLETA="$NOME_CLASSE"
             fi
+          
+            echo "=================================================="
+            echo "▶ Executando: $CLASSE_COMPLETA"
+            echo "=================================================="
+          
+            java -cp out_classes "$CLASSE_COMPLETA" || echo "⚠️ A execução de $CLASSE_COMPLETA falhou (verifique se o main tem String[] args)."
+          
+            echo ""
           done
