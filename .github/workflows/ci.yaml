@@ -10,74 +10,63 @@ on:
       - main
 
 jobs:
-  run-new-classes:
+  run-all-mains:
     runs-on: ubuntu-latest
 
     steps:
       - name: Fazer o checkout do código
         uses: actions/checkout@v4
-        with:
-          # O fetch-depth: 2 é necessário para o git comparar os commits
-          fetch-depth: 2
 
       - name: Configurar o Java
         uses: actions/setup-java@v4
         with:
-          java-version: '22' # numero do bem
+          java-version: '17' # Altere se usar outra versão
           distribution: 'temurin'
 
-      - name: Identificar, Compilar e Executar arquivos novos
+      - name: Compilar projeto e executar todas as mains
         run: |
-          NOVOS_ARQUIVOS=$(git diff --name-only --diff-filter=A HEAD~1 | grep '\.java$' || true)
+          echo "Buscando arquivos Java no projeto..."
           
-          if [ -z "$NOVOS_ARQUIVOS" ]; then
-            echo "Nenhuma classe Java nova foi encontrada neste commit."
+          # Cria um arquivo de texto com o caminho de TODOS os .java do repositório
+          find . -name "*.java" > sources.txt
+          
+          if [ ! -s sources.txt ]; then
+            echo "Nenhum arquivo Java encontrado no repositório."
             exit 0
           fi
           
-          echo "Arquivos encontrados:"
-          echo "$NOVOS_ARQUIVOS"
-          echo "----------------------------------------"
+          # Cria a pasta para onde os arquivos compilados vão
+          mkdir -p out_classes
           
-          for ARQUIVO in $NOVOS_ARQUIVOS; do
-            echo "Processando arquivo: $ARQUIVO"
+          echo "Compilando todos os arquivos..."
+          javac -d out_classes @sources.txt
           
-            # Identifica onde está a pasta 'src'
-            SRC_DIR=$(echo "$ARQUIVO" | sed -n 's/\(.*src\)\/.*/\1/p')
+          echo "Procurando por classes com método 'public static void main'..."
           
-            if [ -n "$SRC_DIR" ]; then
-              echo "Compilando todo o projeto da pasta: $SRC_DIR"
+          # Busca todos os arquivos .java que tenham o método main escrito dentro
+          ARQUIVOS_MAIN=$(grep -rl "public static void main" . | grep '\.java$' || true)
           
-              # Cria uma lista com TODOS os arquivos .java do seu src
-              find "$SRC_DIR" -name "*.java" > sources.txt
+          if [ -z "$ARQUIVOS_MAIN" ]; then
+            echo "Nenhuma classe com método main foi encontrada."
+            exit 0
+          fi
           
-              # Cria uma pasta temporária para guardar os arquivos compilados (.class)
-              mkdir -p out_classes
+          for ARQUIVO in $ARQUIVOS_MAIN; do
+            # Extrai apenas a parte do caminho depois de '/src/' para pegar a estrutura de pacotes
+            # Ex: ./exercicios/src/br/com/pacote/App.java vira br/com/pacote/App.java
+            CAMINHO_RELATIVO=$(echo "$ARQUIVO" | sed -n 's/.*\/src\/\(.*\)/\1/p')
           
-              # Compila todos os arquivos juntos (isso resolve o erro cannot find symbol)
-              javac -d out_classes @sources.txt
+            if [ -n "$CAMINHO_RELATIVO" ]; then
+              # Substitui as barras por pontos para formar o nome do pacote (br.com.pacote.App)
+              CLASSE_COMPLETA=$(echo "$CAMINHO_RELATIVO" | sed 's/\//./g' | sed 's/\.java//')
           
-              # Transforma o caminho no nome do pacote. Ex: pacote.domain.Funcionario
-              CLASSE_COMPLETA=$(echo "$ARQUIVO" | sed "s|$SRC_DIR/||" | sed 's/\//./g' | sed 's/\.java//')
+              echo "=================================================="
+              echo "▶ Executando: $CLASSE_COMPLETA"
+              echo "=================================================="
           
-              echo "Executando classe: $CLASSE_COMPLETA"
+              # Executa a classe apontando para a pasta onde tudo foi compilado
+              java -cp out_classes "$CLASSE_COMPLETA"
           
-              # O '|| true' evita que a Action dê erro (vermelho) se a classe for apenas um modelo e não tiver 'public static void main'
-              java -cp out_classes "$CLASSE_COMPLETA" || echo "A classe não possui método main para ser executada."
-          
-              # Limpa os arquivos temporários para a próxima execução
-              rm sources.txt
-              rm -rf out_classes
-          
-            else
-              # Fallback: Se o arquivo estiver solto (fora do src), compila tudo na pasta dele
-              DIRETORIO=$(dirname "$ARQUIVO")
-              NOME_CLASSE=$(basename "$ARQUIVO" .java)
-              cd "$DIRETORIO"
-              javac *.java
-              java "$NOME_CLASSE" || echo "A classe não possui método main para ser executada."
-              cd - > /dev/null
+              echo ""
             fi
-          
-            echo "----------------------------------------"
           done
